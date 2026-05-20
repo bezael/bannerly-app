@@ -1,36 +1,177 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bannerly
 
-## Getting Started
+> Generación de imágenes dinámicas vía API. Diseña una plantilla una vez, renderiza miles de variantes a escala.
 
-First, run the development server:
+Alternativa open-source enfocada al desarrollador hispanohablante a [Bannerbear](https://www.bannerbear.com), Placid y similares. Construido en directo durante el workshop **Beyond Prompts** (22–23 mayo 2026) por [Bezael · Dominicode](https://www.youtube.com/@Dominicode) y [Freddy Montes](https://github.com/freddymontes), aplicando metodología **Spec-Driven Development**.
+
+---
+
+## Casos de uso
+
+- Imágenes Open Graph dinámicas para blogs y SaaS
+- Certificados, recibos y diplomas personalizados
+- Creatividades para campañas y redes sociales a escala
+- Miniaturas de YouTube generadas desde un script o automatización
+- Tarjetas de bienvenida personalizadas en flujos de onboarding
+
+## Features
+
+### MVP (v0.1)
+
+- Autenticación con email/password (Supabase Auth)
+- Galería de plantillas pre-cargadas + plantillas propias
+- Sustitución de textos, imágenes y colores por capa nombrada
+- API REST autenticada con API keys por usuario
+- Renderizado server-side a PNG (Satori + resvg)
+- Almacenamiento en Supabase Storage
+- Dashboard con historial de generaciones y previews
+
+### Roadmap
+
+- [ ] Editor visual drag-and-drop de capas
+- [ ] Webhooks de generación asíncrona
+- [ ] Signed URLs con expiración
+- [ ] Colecciones (varios tamaños desde una sola plantilla)
+- [ ] Generación de vídeo
+- [ ] Integraciones con n8n y Zapier
+- [ ] Billing con Stripe y planes por volumen
+
+## Stack
+
+| Capa | Tecnología |
+|------|-----------|
+| Framework | [Next.js 15](https://nextjs.org) (App Router) |
+| Estilos | [Tailwind CSS](https://tailwindcss.com) |
+| Auth + DB + Storage | [Supabase](https://supabase.com) |
+| Renderer | [Satori](https://github.com/vercel/satori) + [@resvg/resvg-js](https://github.com/yisibl/resvg-js) |
+| Validación | [Zod](https://zod.dev) |
+| Deploy | [Vercel](https://vercel.com) |
+
+## Empezar en local
+
+### Requisitos
+
+- Node.js 22+
+- pnpm (recomendado) o npm
+- Cuenta de [Supabase](https://supabase.com) (free tier basta)
+
+### 1. Clonar e instalar
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/dominicode/bannerly.git
+cd bannerly
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configurar variables de entorno
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copia `.env.example` a `.env.local` y rellena:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...
+SUPABASE_SERVICE_ROLE_KEY=ey...
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-## Learn More
+### 3. Configurar Supabase
 
-To learn more about Next.js, take a look at the following resources:
+Ejecuta las migraciones SQL desde el editor SQL de tu proyecto:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# las migraciones están en /supabase/migrations
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Crea el bucket de Storage `bannerly-images` (público para v1). (TBD)
 
-## Deploy on Vercel
+### 4. Arrancar
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Abre [http://localhost:3000](http://localhost:3000).
+
+## Uso de la API
+
+Todas las peticiones requieren un API key en el header `Authorization`. Genera tu key desde `/dashboard/api-keys`.
+
+### Generar una imagen
+
+```bash
+curl -X POST https://bannerly.app/api/v1/images \
+  -H "Authorization: Bearer bnly_xxxxxxxxxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "tpl_og_basic",
+    "modifications": [
+      { "name": "title",    "text": "Hola Dominicode" },
+      { "name": "subtitle", "text": "Generado con Bannerly" },
+      { "name": "avatar",   "image_url": "https://github.com/bezael.png" }
+    ]
+  }'
+```
+
+**Respuesta:**
+
+```json
+{
+  "id": "gen_01HXYZABCDEF",
+  "template_id": "tpl_og_basic",
+  "image_url": "https://xxxxx.supabase.co/storage/v1/object/public/bannerly-images/gen_01HXYZABCDEF.png",
+  "created_at": "2026-05-22T12:00:00Z"
+}
+```
+
+### Listar generaciones
+
+```bash
+curl https://bannerly.app/api/v1/images \
+  -H "Authorization: Bearer bnly_xxxxxxxxxxxxxxxxxxxx"
+```
+
+## Estructura del proyecto
+
+```
+bannerly/
+├── app/
+│   ├── (auth)/                  # login, register
+│   ├── dashboard/               # UI privada
+│   │   ├── templates/
+│   │   ├── generations/
+│   │   └── api-keys/
+│   └── api/
+│       └── v1/
+│           └── images/          # endpoint público
+├── components/
+├── lib/
+│   ├── supabase/                # clients (server, client, service-role)
+│   ├── renderer/                # Satori + resvg
+│   └── auth/                    # API key validation
+├── supabase/
+│   └── migrations/              # schema SQL
+├── templates/                   # plantillas seed
+└── specs/                       # specs SDD del proyecto
+```
+
+## Filosofía: construido con SDD
+
+Bannerly se especifica antes de codear. Cada feature pasa por:
+
+1. **Spec** — qué hace, qué no, contratos de API, criterios de aceptación
+2. **Plan** — descomposición en tareas atómicas
+3. **Implementación** — guiada por la spec, sin desvíos
+
+Las specs viven en `/specs` y son ciudadanas de primera del repo. Si encuentras un comportamiento que no está en una spec, es un bug o una spec faltante. Si te interesa el método, échale un ojo a [SDD: Construye con control](https://leanpub.com/sdd-bezael).
+
+## Contribuir
+
+Este es un proyecto educativo construido en directo. Issues y PRs bienvenidos, especialmente si encuentras bugs durante o después del workshop. Para cambios grandes, abre primero un issue con la propuesta de spec.
+
+## Licencia
+
+MIT © 2026 [Bezael · Dominicode](https://www.youtube.com/@Dominicode) & Freddy Montes
+
+## Agradecimientos
+
+Inspirado en [Bannerbear](https://www.bannerbear.com) — gracias por marcar el estándar de lo que una API de generación de imágenes debe ser.
