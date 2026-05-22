@@ -40,7 +40,7 @@ Alternativa open-source enfocada al desarrollador hispanohablante a [Bannerbear]
 
 | Capa | Tecnología |
 |------|-----------|
-| Framework | [Next.js 15](https://nextjs.org) (App Router) |
+| Framework | [Next.js 16](https://nextjs.org) (App Router) |
 | Estilos | [Tailwind CSS](https://tailwindcss.com) |
 | Auth + DB + Storage | [Supabase](https://supabase.com) |
 | Renderer | [Satori](https://github.com/vercel/satori) + [@resvg/resvg-js](https://github.com/yisibl/resvg-js) |
