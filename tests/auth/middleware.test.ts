@@ -23,8 +23,8 @@ vi.mock('next/server', async () => {
 
 async function getMiddleware() {
   vi.resetModules()
-  const mod = await import('@/middleware')
-  return mod.middleware
+  const mod = await import('@/proxy')
+  return mod.proxy
 }
 
 describe('middleware', () => {

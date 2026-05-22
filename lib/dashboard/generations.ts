@@ -29,5 +29,12 @@ export async function getGenerations(
 
   if (error) return { data: [], total: 0 }
 
-  return { data: (data as Generation[]) ?? [], total: count ?? 0 }
+  const generations: Generation[] = (data ?? []).map((row) => ({
+    id: row.id,
+    image_url: row.image_url,
+    created_at: row.created_at,
+    templates: Array.isArray(row.templates) ? (row.templates[0] ?? null) : row.templates,
+  }))
+
+  return { data: generations, total: count ?? 0 }
 }
