@@ -1,0 +1,107 @@
+name: Claude E2E Feature
+
+# Flujo agéntico end-to-end (human-in-the-loop):
+# Abres el issue y NO pasa nada. Cuando le añades la etiqueta "e2e", arranca:
+# implementa -> prueba con Playwright (graba video) -> abre PR -> reporta -> sube el video.
+#
+# El disparador por etiqueta no choca con claude.yml (que no escucha el evento `labeled`).
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  e2e-feature:
+    if: github.event.label.name == 'e2e'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # crear rama y commitear
+      pull-requests: write   # abrir el PR y comentar
+      issues: write          # responder en el issue
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Claude Code (implement + test + open PR)
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          # Variables que la app necesita para levantar `pnpm dev` en CI.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          additional_permissions: |
+            actions: read
+          claude_args: '--allowed-tools "Bash,Read,Write,Edit,Glob,Grep"'
+          prompt: |
+            Un humano te asignó este trabajo poniéndole la etiqueta "e2e" al issue
+            #${{ github.event.issue.number }} ("${{ github.event.issue.title }}").
+
+            El cuerpo del issue describe un feature a implementar. Ejecuta TODO este ciclo
+            sin pedir confirmación, ya que corres en CI sin un humano disponible:
+
+            1. IMPLEMENTAR
+               - Lee /specs/ primero (metodología SDD del proyecto). Si no hay spec para
+                 este feature, crea uno breve en /specs/ antes de codear.
+               - Lee la guía relevante en node_modules/next/dist/docs/ antes de escribir
+                 código Next.js (este proyecto usa una versión con breaking changes).
+               - Crea una rama nueva: feat/issue-${{ github.event.issue.number }}.
+               - Implementa el feature descrito en el issue.
+
+            2. PROBAR (E2E con video)
+               - Añade un nuevo spec en e2e/ que ejercite el GOLDEN PATH del feature
+                 (navega, interactúa, y haz asserts visibles). La config ya graba video
+                 (video: 'on' en playwright.config.ts), así que cada test deja un .webm.
+               - Corre `pnpm test:e2e`. Si falla, ARREGLA el código o el test hasta que pase.
+                 Los videos quedan en e2e/.results/.
+               - Corre también `pnpm lint` y `pnpm test` (unit) y deja todo en verde.
+
+            3. ABRIR PR
+               - Commitea tu trabajo y abre un PR contra main con `gh pr create`.
+               - El cuerpo del PR debe cerrar el issue con "Closes #${{ github.event.issue.number }}".
+
+            4. REPORTAR en el PR (comentario con `gh pr comment`)
+               Incluye un reporte estructurado:
+                 - Qué feature se implementó y qué archivos cambiaron.
+                 - Resultado de los tests e2e (pasaron/fallaron, cuántos).
+                 - Resultado de lint y unit tests.
+                 - Una nota: "El video de la prueba está disponible como artifact
+                   'e2e-video' en esta corrida del workflow" (incluye el link a la run:
+                   ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+                 - Cualquier limitación o supuesto que hayas tomado.
+
+            Reglas: no hagas force-push, no borres ramas ajenas, no toques otros workflows.
+
+      - name: Upload E2E video & report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-video
+          path: |
+            e2e/.results/**
+            e2e/.report/**
+          if-no-files-found: warn
+          retention-days: 14
