@@ -130,6 +130,7 @@ jobs:
           find e2e/.results -name '*.webm' 2>/dev/null || echo "(ninguno)"
 
       - name: Upload E2E video & report
+        id: upload
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -159,13 +160,22 @@ jobs:
           fi
           VIDEOS=$(find e2e/.results -name '*.webm' 2>/dev/null | wc -l | tr -d ' ')
 
+          # Link directo de descarga del artifact (un clic = baja el zip),
+          # construido con el artifact-id que expone upload-artifact@v4.
+          ARTIFACT_ID="${{ steps.upload.outputs.artifact-id }}"
+          if [ -n "$ARTIFACT_ID" ]; then
+            VIDEO_LINK="[⬇️ Descargar video (e2e-video.zip)]($RUN_URL/artifacts/$ARTIFACT_ID)"
+          else
+            VIDEO_LINK="Artifact **e2e-video** en [esta corrida]($RUN_URL) (no se subió ningún video)"
+          fi
+
           {
             echo "## Reporte de tests (generado por el workflow)"
             echo ""
             echo "$STATUS"
             echo ""
             echo "- Videos \`.webm\` grabados: **$VIDEOS**"
-            echo "- Artifact descargable: **e2e-video** en [esta corrida]($RUN_URL)"
+            echo "- $VIDEO_LINK"
             echo ""
             echo "_Resultado producido por un step determinístico del workflow corriendo \`pnpm test:e2e\` sobre la rama del PR — no por el agente._"
           } > pr-comment.md
