@@ -14,6 +14,7 @@ export function mockSupabase<T = unknown>(result: QueryResult<T>) {
     'select',
     'eq',
     'insert',
+    'update',
     'delete',
     'order',
     'maybeSingle',
