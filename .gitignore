@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/e2e/.results
+/e2e/.report
 
 # next.js
 /.next/
@@ -40,8 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-.claude/
-.agents/
 
 specs/supabase-hello-world
 
