@@ -137,6 +137,9 @@ jobs:
           path: |
             e2e/.results/**
             e2e/.report/**
+          # .results y .report empiezan con punto; sin esto, upload-artifact@v4
+          # los trata como ocultos y NO los sube (artifact vacío).
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 14
 
