@@ -13,7 +13,7 @@ export async function GET() {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.from("workshop_test").select("*").limit(10);
+  const { data, error } = await supabase.from("templates").select("*").limit(10);
 
   if (error) {
     return NextResponse.json(
