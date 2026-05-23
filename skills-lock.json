@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "dominicode-sdd-creator": {
+      "source": "bezael/sdd-creator",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/dominicode-sdd-creator/SKILL.md",
+      "computedHash": "fe707c229f0855ce50a2a7c4da595fae8e266b07c3c73ecf45fb9cee6e5448ac"
+    }
+  }
+}
