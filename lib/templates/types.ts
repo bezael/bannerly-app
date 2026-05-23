@@ -1,25 +1,39 @@
+export type LayerType = 'text' | 'image'
+
+export interface LayerStyle {
+  fontSize?: number
+  color?: string
+  x?: number
+  y?: number
+}
+
+export interface Layer {
+  name: string
+  type: LayerType
+  style?: LayerStyle
+}
+
 export interface Template {
   id: string
-  user_id: string | null
-  template_uid: string       // identificador único por usuario, ej. "og-basic"
+  slug: string
   name: string
+  layout_id: string
   width: number
   height: number
-  jsx_code: string           // JSX como string con placeholders {{fieldName}}
-  thumbnail_url: string | null
+  layers: Layer[]
+  user_id: string
   created_at: string
-  updated_at: string
 }
 
 export interface CreateTemplateInput {
-  template_uid: string
+  slug: string
   name: string
+  layout_id: string
   width?: number
   height?: number
-  jsx_code: string
+  layers?: Layer[]
 }
 
-// Modification recibida por el endpoint POST /api/v1/images
 export interface Modification {
   name: string
   text?: string
