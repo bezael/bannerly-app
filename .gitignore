@@ -44,3 +44,6 @@ next-env.d.ts
 .agents/
 
 specs/supabase-hello-world
+
+# supabase cli local cache
+supabase/.temp/

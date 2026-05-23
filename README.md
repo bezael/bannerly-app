@@ -28,13 +28,13 @@ Alternativa open-source enfocada al desarrollador hispanohablante a [Bannerbear]
 
 ### Roadmap
 
-- [ ] Editor visual drag-and-drop de capas
-- [ ] Webhooks de generación asíncrona
-- [ ] Signed URLs con expiración
-- [ ] Colecciones (varios tamaños desde una sola plantilla)
-- [ ] Generación de vídeo
-- [ ] Integraciones con n8n y Zapier
-- [ ] Billing con Stripe y planes por volumen
+- Editor visual drag-and-drop de capas
+- Webhooks de generación asíncrona
+- Signed URLs con expiración
+- Colecciones (varios tamaños desde una sola plantilla)
+- Generación de vídeo
+- Integraciones con n8n y Zapier
+- Billing con Stripe y planes por volumen
 
 ## Stack
 
@@ -47,7 +47,17 @@ Alternativa open-source enfocada al desarrollador hispanohablante a [Bannerbear]
 | Validación | [Zod](https://zod.dev) |
 | Deploy | [Vercel](https://vercel.com) |
 
-## Empezar en local
+| Capa                | Tecnología                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| Framework           | [Next.js 15](https://nextjs.org) (App Router)                                                      |
+| Estilos             | [Tailwind CSS](https://tailwindcss.com)                                                            |
+| Auth + DB + Storage | [Supabase](https://supabase.com)                                                                   |
+| Renderer            | [Satori](https://github.com/vercel/satori) + [@resvg/resvg-js](https://github.com/yisibl/resvg-js) |
+| Validación          | [Zod](https://zod.dev)                                                                             |
+| Deploy              | [Vercel](https://vercel.com)                                                                       |
+
+
+## Empezar en localsupa
 
 ### Requisitos
 
@@ -63,26 +73,55 @@ cd bannerly
 pnpm install
 ```
 
-### 2. Configurar variables de entorno
+### 2. Configurar Supabase con la CLI
 
-Copia `.env.example` a `.env.local` y rellena:
+Necesitas la [Supabase CLI](https://supabase.com/docs/guides/cli) instalada y autenticada (`supabase login`).
+
+#### Opción A — proyecto nuevo en la nube
+
+```bash
+# Crea el proyecto (te pedirá org-id; lista las tuyas con `supabase orgs list`)
+supabase projects create bannerly-app \
+  --org-id <tu-org-id> \
+  --region us-east-1 \
+  --db-password "<una-password-fuerte>"
+
+# Enlaza el repo local al proyecto recién creado
+supabase link --project-ref <project-ref>
+
+# Aplica todas las migraciones (crea tabla `templates`, bucket `bannerly-images`
+# y siembra la plantilla `og-basic`)
+supabase db push
+```
+
+#### Opción B — proyecto existente
+
+```bash
+supabase link --project-ref <project-ref>
+supabase db push
+```
+
+#### Opción C — Supabase local (Docker)
+
+```bash
+supabase start          # arranca Postgres + Storage + Auth en local
+supabase db reset       # aplica migraciones contra la instancia local
+```
+
+`supabase start` imprime las URLs y keys locales que usarás en `.env.local`.
+
+### 3. Configurar variables de entorno
+
+Copia `.env.example` a `.env.local` y rellena con los valores de tu proyecto
+(obtén las keys con `supabase projects api-keys --project-ref <ref>` o desde
+el dashboard):
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=ey...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
-
-### 3. Configurar Supabase
-
-Ejecuta las migraciones SQL desde el editor SQL de tu proyecto:
-
-```bash
-# las migraciones están en /supabase/migrations
-```
-
-Crea el bucket de Storage `bannerly-images` (público para v1). (TBD)
 
 ### 4. Arrancar
 
