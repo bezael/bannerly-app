@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("workshop_test").select("*").limit(10);
+  const { data, error } = await supabase.from("templates").select("*").limit(10);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8 font-mono">
@@ -18,7 +18,7 @@ export default async function Home() {
       ) : (
         <div>
           <p className="mb-4 text-sm text-zinc-500">
-            Tabla <code className="font-bold text-zinc-800 dark:text-zinc-200">workshop_test</code> — {data?.length ?? 0} registro(s)
+            Tabla <code className="font-bold text-zinc-800 dark:text-zinc-200">templates</code> — {data?.length ?? 0} registro(s)
           </p>
           <pre className="rounded-lg border border-zinc-200 bg-white p-4 text-sm text-zinc-800 overflow-auto dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
             {JSON.stringify(data, null, 2)}
