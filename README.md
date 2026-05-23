@@ -193,6 +193,73 @@ Bannerly se especifica antes de codear. Cada feature pasa por:
 
 Las specs viven en `/specs` y son ciudadanas de primera del repo. Si encuentras un comportamiento que no está en una spec, es un bug o una spec faltante. Si te interesa el método, échale un ojo a [SDD: Construye con control](https://leanpub.com/sdd-bezael).
 
+## Flujo agéntico end-to-end (Claude + GitHub Actions)
+
+El repo incluye un sistema agéntico que, a partir de un solo issue, implementa un
+feature, lo prueba en un navegador real grabando vídeo, abre el PR y publica un
+reporte. Es el demo construido durante el workshop **Beyond Prompts**.
+
+### Cómo dispararlo (human-in-the-loop)
+
+1. Abre un issue describiendo el feature. **No pasa nada todavía** — el issue queda a la espera.
+
+   ```
+   Título: Agregar página /preview
+
+   Crea una ruta pública /preview que muestre las plantillas en una grilla
+   de cards con su nombre. Pruébala navegando y verificando que renderiza.
+   ```
+
+2. Cuando quieras que Claude se ponga a trabajar, **añade la etiqueta `e2e`** al issue.
+   Ese gesto manual es lo que dispara el flujo.
+
+El disparo por etiqueta (`issues: labeled`) no choca con el workflow general
+`claude.yml` (que responde a `@claude` pero no escucha el evento `labeled`). Crea la
+etiqueta una vez con:
+
+```bash
+gh label create e2e --description "Dispara el flujo agéntico e2e de Claude" --color 5319e7
+```
+
+### Qué hace el agente
+
+El workflow [`.github/workflows/claude-e2e-feature.yml`](.github/workflows/claude-e2e-feature.yml)
+ejecuta el ciclo completo sin intervención humana:
+
+1. **Implementa** — lee `/specs/` (crea uno si falta), crea la rama `feat/issue-N` e implementa el feature.
+2. **Prueba** — añade un spec en `e2e/` que ejercita el golden path; Playwright graba un vídeo `.webm` de cada test. Corre `pnpm test:e2e`, `pnpm lint` y `pnpm test` hasta dejar todo en verde.
+3. **Abre el PR** — contra `main`, con `Closes #N`.
+4. **Reporta** — comenta en el PR qué se implementó, el resultado de los tests y el enlace a la corrida.
+5. **Sube el vídeo** — como artifact descargable `e2e-video` de la corrida del workflow.
+
+### Pruebas end-to-end en local
+
+Las pruebas viven en `e2e/` y usan [Playwright](https://playwright.dev), configurado
+en [`playwright.config.ts`](playwright.config.ts) para grabar vídeo, trace y screenshots
+(`video: 'on'`). Playwright levanta `pnpm dev` automáticamente.
+
+```bash
+pnpm exec playwright install chromium   # una sola vez
+pnpm test:e2e                           # corre los specs y graba vídeo
+```
+
+Los artefactos quedan en `e2e/.results/` (vídeos `.webm`, traces) y el reporte HTML
+en `e2e/.report/`. Ambos directorios están en `.gitignore`.
+
+### Secrets requeridos
+
+En **Settings → Secrets and variables → Actions** del repo:
+
+| Secret | Uso |
+|--------|-----|
+| `CLAUDE_CODE_OAUTH_TOKEN` | Token de Claude Code (compartido con los demás workflows) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Para que `pnpm dev` levante en CI |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Para que `pnpm dev` levante en CI |
+| `SUPABASE_SERVICE_ROLE_KEY` | Para que `pnpm dev` levante en CI |
+
+Sin las keys de Supabase el demo igual graba el vídeo (la home renderiza el estado
+de error), pero con ellas se ejercita la app con datos reales.
+
 ## Contribuir
 
 Este es un proyecto educativo construido en directo. Issues y PRs bienvenidos, especialmente si encuentras bugs durante o después del workshop. Para cambios grandes, abre primero un issue con la propuesta de spec.
