@@ -28,26 +28,28 @@ Alternativa open-source enfocada al desarrollador hispanohablante a [Bannerbear]
 
 ### Roadmap
 
-- [ ] Editor visual drag-and-drop de capas
-- [ ] Webhooks de generación asíncrona
-- [ ] Signed URLs con expiración
-- [ ] Colecciones (varios tamaños desde una sola plantilla)
-- [ ] Generación de vídeo
-- [ ] Integraciones con n8n y Zapier
-- [ ] Billing con Stripe y planes por volumen
+- Editor visual drag-and-drop de capas
+- Webhooks de generación asíncrona
+- Signed URLs con expiración
+- Colecciones (varios tamaños desde una sola plantilla)
+- Generación de vídeo
+- Integraciones con n8n y Zapier
+- Billing con Stripe y planes por volumen
 
 ## Stack
 
-| Capa | Tecnología |
-|------|-----------|
-| Framework | [Next.js 15](https://nextjs.org) (App Router) |
-| Estilos | [Tailwind CSS](https://tailwindcss.com) |
-| Auth + DB + Storage | [Supabase](https://supabase.com) |
-| Renderer | [Satori](https://github.com/vercel/satori) + [@resvg/resvg-js](https://github.com/yisibl/resvg-js) |
-| Validación | [Zod](https://zod.dev) |
-| Deploy | [Vercel](https://vercel.com) |
 
-## Empezar en local
+| Capa                | Tecnología                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| Framework           | [Next.js 15](https://nextjs.org) (App Router)                                                      |
+| Estilos             | [Tailwind CSS](https://tailwindcss.com)                                                            |
+| Auth + DB + Storage | [Supabase](https://supabase.com)                                                                   |
+| Renderer            | [Satori](https://github.com/vercel/satori) + [@resvg/resvg-js](https://github.com/yisibl/resvg-js) |
+| Validación          | [Zod](https://zod.dev)                                                                             |
+| Deploy              | [Vercel](https://vercel.com)                                                                       |
+
+
+## Empezar en localsupa
 
 ### Requisitos
 
@@ -108,7 +110,7 @@ el dashboard):
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=ey...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
