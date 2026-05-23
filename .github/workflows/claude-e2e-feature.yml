@@ -149,8 +149,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PR=$(gh pr list --head "feat/issue-${{ github.event.issue.number }}" --json number --jq '.[0].number')
-          if [ -z "$PR" ]; then echo "No PR found, skipping comment"; exit 0; fi
+          # Buscamos el PR por su rama vía REST (gh pr list usa GraphQL, que con el
+          # GITHUB_TOKEN de Actions devolvía 401 al final de jobs largos).
+          BRANCH="feat/issue-${{ github.event.issue.number }}"
+          OWNER="${{ github.repository_owner }}"
+          PR=$(gh api "repos/${{ github.repository }}/pulls?head=${OWNER}:${BRANCH}&state=open" --jq '.[0].number')
+          if [ -z "$PR" ] || [ "$PR" = "null" ]; then echo "No PR found, skipping comment"; exit 0; fi
 
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           if [ "${{ steps.e2e.outcome }}" = "success" ]; then
@@ -180,4 +184,6 @@ jobs:
             echo "_Resultado producido por un step determinístico del workflow corriendo \`pnpm test:e2e\` sobre la rama del PR — no por el agente._"
           } > pr-comment.md
 
-          gh pr comment "$PR" --body-file pr-comment.md
+          # Posteamos vía REST (un PR es un issue para la API de comentarios).
+          gh api "repos/${{ github.repository }}/issues/${PR}/comments" \
+            -f body="$(cat pr-comment.md)"
