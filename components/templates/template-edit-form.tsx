@@ -2,23 +2,22 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  createTemplateAction,
-  type ActionState,
-} from '@/app/dashboard/templates/actions'
+import type { ActionState } from '@/app/dashboard/templates/actions'
 import { TemplateEditor } from './template-editor'
-import type { Layer } from '@/lib/templates/types'
+import type { Layer, Template } from '@/lib/templates/types'
+
+interface TemplateEditFormProps {
+  template: Template
+  action: (prevState: ActionState, formData: FormData) => Promise<ActionState>
+}
 
 const initialState: ActionState = { error: null }
 
-export function TemplateForm() {
+export function TemplateEditForm({ template, action }: TemplateEditFormProps) {
   const router = useRouter()
-  const [layers, setLayers] = useState<Layer[]>([])
+  const [layers, setLayers] = useState<Layer[]>(template.layers)
   const layersRef = useRef<HTMLInputElement>(null)
-  const [state, formAction, pending] = useActionState(
-    createTemplateAction,
-    initialState
-  )
+  const [state, formAction, pending] = useActionState(action, initialState)
 
   useEffect(() => {
     if (state && state.error === null && state !== initialState) {
@@ -38,10 +37,10 @@ export function TemplateForm() {
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Slug</span>
         <input
-          name="slug"
-          required
-          placeholder="og-basic"
-          className="rounded border border-neutral-300 px-3 py-2 text-sm"
+          name="slug_display"
+          disabled
+          value={template.slug}
+          className="rounded border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-500"
         />
       </label>
 
@@ -50,17 +49,7 @@ export function TemplateForm() {
         <input
           name="name"
           required
-          placeholder="OG Basic"
-          className="rounded border border-neutral-300 px-3 py-2 text-sm"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium">Layout ID</span>
-        <input
-          name="layout_id"
-          required
-          defaultValue="og-basic"
+          defaultValue={template.name}
           className="rounded border border-neutral-300 px-3 py-2 text-sm"
         />
       </label>
@@ -72,7 +61,7 @@ export function TemplateForm() {
         defaultValue={JSON.stringify(layers)}
       />
 
-      <TemplateEditor onChange={handleLayersChange} />
+      <TemplateEditor initialLayers={template.layers} onChange={handleLayersChange} />
 
       {state?.error ? (
         <p role="alert" className="text-sm text-red-600">
@@ -85,7 +74,7 @@ export function TemplateForm() {
         disabled={pending}
         className="rounded bg-black px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
       >
-        {pending ? 'Creating…' : 'Create template'}
+        {pending ? 'Saving…' : 'Save changes'}
       </button>
     </form>
   )

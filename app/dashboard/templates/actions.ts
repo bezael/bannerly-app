@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createTemplate } from '@/lib/templates/create-template'
 import { deleteTemplate } from '@/lib/templates/delete-template'
+import { updateTemplate } from '@/lib/templates/update-template'
+import type { Layer } from '@/lib/templates/types'
 
 export type ActionState = { error: string | null }
 
@@ -29,16 +31,57 @@ export async function createTemplateAction(
     return { error: 'slug, name and layout_id are required' }
   }
 
+  const layersRaw = formData.get('layers')
+  let layers: Layer[] = []
+  if (layersRaw) {
+    try {
+      layers = JSON.parse(String(layersRaw)) as Layer[]
+    } catch {
+      return { error: 'Invalid layers format' }
+    }
+  }
+
   const { supabase, user } = await getAuthedClient()
   const result = await createTemplate(
     supabase,
-    { slug, name, layout_id },
+    { slug, name, layout_id, layers },
     user.id
   )
 
   if (result.error) return { error: result.error }
 
   revalidatePath('/dashboard/templates')
+  return { error: null }
+}
+
+export async function updateTemplateAction(
+  id: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const name = String(formData.get('name') ?? '').trim()
+
+  if (!name) {
+    return { error: 'name is required' }
+  }
+
+  const layersRaw = formData.get('layers')
+  let layers: Layer[] = []
+  if (layersRaw) {
+    try {
+      layers = JSON.parse(String(layersRaw)) as Layer[]
+    } catch {
+      return { error: 'Invalid layers format' }
+    }
+  }
+
+  const { supabase, user } = await getAuthedClient()
+  const result = await updateTemplate(supabase, id, { name, layers }, user.id)
+
+  if (result.error) return { error: result.error }
+
+  revalidatePath('/dashboard/templates')
+  revalidatePath(`/dashboard/templates/${id}`)
   return { error: null }
 }
 

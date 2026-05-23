@@ -4,12 +4,11 @@ import { listTemplatesGlobal } from "@/lib/templates/list-templates-global";
 import { TemplateGallery } from "@/components/home/template-gallery";
 
 export default async function Home() {
-  const supabase = createServiceClient();
-
   let templates = null;
   let errorMessage: string | null = null;
 
   try {
+    const supabase = createServiceClient();
     templates = await listTemplatesGlobal(supabase);
   } catch (err) {
     errorMessage =

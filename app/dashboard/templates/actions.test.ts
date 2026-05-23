@@ -97,7 +97,7 @@ describe('createTemplateAction', () => {
     expect(result).toEqual({ error: null })
     expect(mocks.createTemplate).toHaveBeenCalledWith(
       expect.anything(),
-      { slug: 'og', name: 'OG', layout_id: 'og-basic' },
+      { slug: 'og', name: 'OG', layout_id: 'og-basic', layers: [] },
       'user-1'
     )
     expect(mocks.revalidatePath).toHaveBeenCalledWith('/dashboard/templates')

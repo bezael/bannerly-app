@@ -5,7 +5,13 @@ import { listTemplates } from '@/lib/templates/list-templates'
 import { TemplateList } from '@/components/templates/template-list'
 
 export default async function TemplatesPage() {
-  const supabase = await createClient()
+  let supabase
+  try {
+    supabase = await createClient()
+  } catch {
+    redirect('/login')
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()

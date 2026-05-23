@@ -4,7 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 import { TemplateForm } from '@/components/templates/template-form'
 
 export default async function NewTemplatePage() {
-  const supabase = await createClient()
+  let supabase
+  try {
+    supabase = await createClient()
+  } catch {
+    redirect('/login')
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
