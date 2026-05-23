@@ -68,7 +68,7 @@ pnpm install
 Copia `.env.example` a `.env.local` y rellena:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...
 SUPABASE_SERVICE_ROLE_KEY=ey...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
