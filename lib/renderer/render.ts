@@ -36,3 +36,12 @@ export async function renderTemplate(
   const svg = await jsxToSvg(element, width, height)
   return svgToPng(svg)
 }
+
+export async function renderLayout(
+  element: React.ReactNode,
+  width: number,
+  height: number,
+): Promise<Buffer> {
+  const svg = await jsxToSvg(element, width, height)
+  return svgToPng(svg)
+}
