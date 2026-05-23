@@ -71,29 +71,63 @@ jobs:
                - Crea una rama nueva: feat/issue-${{ github.event.issue.number }}.
                - Implementa el feature descrito en el issue.
 
-            2. PROBAR (E2E con video)
+            2. PROBAR (E2E) — DEJAR EN VERDE
                - Añade un nuevo spec en e2e/ que ejercite el GOLDEN PATH del feature
-                 (navega, interactúa, y haz asserts visibles). La config ya graba video
-                 (video: 'on' en playwright.config.ts), así que cada test deja un .webm.
+                 (navega, interactúa, y haz asserts visibles).
                - Corre `pnpm test:e2e`. Si falla, ARREGLA el código o el test hasta que pase.
-                 Los videos quedan en e2e/.results/.
                - Corre también `pnpm lint` y `pnpm test` (unit) y deja todo en verde.
+               - NO te preocupes por grabar o subir el video: un step posterior del
+                 workflow re-corre `pnpm test:e2e` y graba el .webm de forma confiable.
+                 Tu única responsabilidad aquí es que los specs estén en VERDE.
 
             3. ABRIR PR
                - Commitea tu trabajo y abre un PR contra main con `gh pr create`.
                - El cuerpo del PR debe cerrar el issue con "Closes #${{ github.event.issue.number }}".
 
             4. REPORTAR en el PR (comentario con `gh pr comment`)
-               Incluye un reporte estructurado:
+               Reporta SOLO lo que hiciste, sin inventar resultados de tests:
                  - Qué feature se implementó y qué archivos cambiaron.
-                 - Resultado de los tests e2e (pasaron/fallaron, cuántos).
-                 - Resultado de lint y unit tests.
-                 - Una nota: "El video de la prueba está disponible como artifact
-                   'e2e-video' en esta corrida del workflow" (incluye el link a la run:
-                   ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+                 - Qué specs e2e añadiste y qué golden path ejercitan.
                  - Cualquier limitación o supuesto que hayas tomado.
+               NO afirmes cuántos tests pasaron ni menciones el video: un step
+               posterior del workflow publica el resultado real de los tests y el
+               link al artifact del video en un comentario aparte.
 
             Reglas: no hagas force-push, no borres ramas ajenas, no toques otros workflows.
+
+      # A partir de aquí, steps determinísticos: el video y el resultado de los
+      # tests los produce el workflow, NO el agente — así son reales y verificables.
+
+      - name: Checkout PR branch
+        run: |
+          BRANCH="feat/issue-${{ github.event.issue.number }}"
+          git fetch origin "$BRANCH"
+          git checkout "$BRANCH"
+
+      - name: Reinstall deps for PR branch
+        run: pnpm install --frozen-lockfile
+
+      - name: Run E2E and record video
+        id: e2e
+        env:
+          CI: "true"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+        run: |
+          set -o pipefail
+          pnpm test:e2e 2>&1 | tee e2e-output.txt
+        # Si los tests fallan, el job falla (rojo) — señal honesta de que algo
+        # quedó roto. Los steps de abajo igual corren gracias a `if: always()`.
+
+      - name: List recorded artifacts (debug)
+        if: always()
+        run: |
+          echo "=== e2e/.results ==="
+          ls -laR e2e/.results 2>/dev/null || echo "(vacío)"
+          echo "=== .webm encontrados ==="
+          find e2e/.results -name '*.webm' 2>/dev/null || echo "(ninguno)"
 
       - name: Upload E2E video & report
         if: always()
@@ -105,3 +139,32 @@ jobs:
             e2e/.report/**
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Comment test result + video link on PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR=$(gh pr list --head "feat/issue-${{ github.event.issue.number }}" --json number --jq '.[0].number')
+          if [ -z "$PR" ]; then echo "No PR found, skipping comment"; exit 0; fi
+
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ "${{ steps.e2e.outcome }}" = "success" ]; then
+            STATUS="✅ **E2E en verde**"
+          else
+            STATUS="❌ **E2E en rojo** — revisa el log de la corrida"
+          fi
+          VIDEOS=$(find e2e/.results -name '*.webm' 2>/dev/null | wc -l | tr -d ' ')
+
+          {
+            echo "## Reporte de tests (generado por el workflow)"
+            echo ""
+            echo "$STATUS"
+            echo ""
+            echo "- Videos \`.webm\` grabados: **$VIDEOS**"
+            echo "- Artifact descargable: **e2e-video** en [esta corrida]($RUN_URL)"
+            echo ""
+            echo "_Resultado producido por un step determinístico del workflow corriendo \`pnpm test:e2e\` sobre la rama del PR — no por el agente._"
+          } > pr-comment.md
+
+          gh pr comment "$PR" --body-file pr-comment.md
