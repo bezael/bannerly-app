@@ -38,6 +38,14 @@ Alternativa open-source enfocada al desarrollador hispanohablante a [Bannerbear]
 
 ## Stack
 
+| Capa | Tecnología |
+|------|-----------|
+| Framework | [Next.js 16](https://nextjs.org) (App Router) |
+| Estilos | [Tailwind CSS](https://tailwindcss.com) |
+| Auth + DB + Storage | [Supabase](https://supabase.com) |
+| Renderer | [Satori](https://github.com/vercel/satori) + [@resvg/resvg-js](https://github.com/yisibl/resvg-js) |
+| Validación | [Zod](https://zod.dev) |
+| Deploy | [Vercel](https://vercel.com) |
 
 | Capa                | Tecnología                                                                                         |
 | ------------------- | -------------------------------------------------------------------------------------------------- |
