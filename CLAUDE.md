@@ -50,7 +50,7 @@ specs/                  # SDD specs — read these before implementing a feature
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=      # server-only, never expose to client
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
